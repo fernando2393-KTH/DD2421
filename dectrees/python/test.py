@@ -2,6 +2,7 @@ import monkdata as m
 import dtree as d
 import random
 from matplotlib import pyplot as plt
+import numpy as np
 
 def partition(data, fraction):
     ldata = list(data)
@@ -9,49 +10,50 @@ def partition(data, fraction):
     breakPoint = int(len(ldata) * fraction)
     return ldata[:breakPoint], ldata[breakPoint:]
 
-fractions = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-bestErrorForFractions = []
-for fraction in fractions:
-    test, validation = partition(m.monk1test, fraction)
-    t=d.buildTree(m.monk1, m.attributes);
+# From a tree and a validation set, returns the best tree pruned of 1 node and the correspondent 1-error
+def best_prune(tree, validation):
+    allPruned = d.allPruned(tree)
+    maxCorrect = 0
+    for prunedTree in allPruned:
+        correct = d.check(prunedTree, validation)
+        print("correct: {}".format(correct))
+        if correct >= maxCorrect:
+            maxCorrect = correct
+            bestPruned = prunedTree
+    return bestPruned, maxCorrect
+
+# returns the complete pruning of the tree and the correspondent 1-error (correct)
+def prune_tree(dataset, fraction):
+    test, validation = partition(dataset, fraction)
+    t=d.buildTree(dataset, m.attributes);
+    correctDefaultTree = d.check(t, test)
     pruned = t
     iteration = 0
     repeat = True
     lastCorrectPruned = 0
     while repeat:
-        print(iteration)
-        allPruned = d.allPruned(pruned)
-        maxCorrect = 0
-
-        for prunedTree in allPruned:
-            correct = d.check(prunedTree, validation)
-            if correct >= maxCorrect:
-                maxCorrect = correct
-                bestPruned = prunedTree
-        correctNormal = d.check(t, test)
-        correctPruned = d.check(bestPruned, validation)
-        print("Iteration {} default tree error: {}, pruned error: {}".format(iteration, 1-correctNormal, 1-correctPruned))
-        iteration = iteration + 1
-        if lastCorrectPruned >= correctPruned:
+        bestPruned, maxCorrect = best_prune(pruned, validation)
+        if lastCorrectPruned < correctDefaultTree:
+            repeat = False
+        if lastCorrectPruned >= maxCorrect:
             repeat = False
         else:
             pruned = bestPruned
-            lastCorrectPruned = correctPruned
-    bestErrorForFractions.append(1-lastCorrectPruned)
+            lastCorrectPruned = maxCorrect
+    return pruned, lastCorrectPruned
 
-print(fractions)
+
+#fractions = np.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
+fractions = np.array([0.3])
+iterations = 1
+bestErrorForFractions = np.zeros((fractions.shape[0], iterations))
+for i in range(iterations):
+    for index, fraction in enumerate(fractions):
+        pruned, correct = prune_tree(m.monk1, fraction)
+        print("Correct {}".format(correct))
+        bestErrorForFractions[index][i] += (1-correct)
+
+bestErrorForFractions /= iterations
 print(bestErrorForFractions)
 plt.plot(fractions, bestErrorForFractions)
-plt.show()
-
-#print("Monk1: ")
-#for attribute in m.attributes:
-#    print("{} {}".format(attribute.name, d.averageGain(m.monk1, attribute)))
-#
-#print("Monk2: ")
-#for attribute in m.attributes:
-#    print("{} {}".format(attribute.name, d.averageGain(m.monk2, attribute)))
-#
-#print("Monk3: ")
-#for attribute in m.attributes:
-#    print("{} {}".format(attribute.name, d.averageGain(m.monk3, attribute)))
+#plt.show()
