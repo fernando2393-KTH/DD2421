@@ -12,20 +12,19 @@ def partition(data, fraction):
 
 # From a tree and a validation set, returns the best tree pruned of 1 node and the correspondent 1-error
 def best_prune(tree, validation):
-    allPruned = d.allPruned(tree)
     maxCorrect = 0
-    for prunedTree in allPruned:
+    bestPruned = tree
+    for prunedTree in d.allPruned(tree):
         correct = d.check(prunedTree, validation)
-        print("correct: {}".format(correct))
         if correct >= maxCorrect:
             maxCorrect = correct
             bestPruned = prunedTree
     return bestPruned, maxCorrect
 
 # returns the complete pruning of the tree and the correspondent 1-error (correct)
-def prune_tree(dataset, fraction):
-    test, validation = partition(dataset, fraction)
-    t=d.buildTree(dataset, m.attributes);
+def prune_tree(training_dataset, testing_dataset, fraction):
+    test, validation = partition(testing_dataset, fraction)
+    t=d.buildTree(training_dataset, m.attributes);
     correctDefaultTree = d.check(t, test)
     pruned = t
     iteration = 0
@@ -43,17 +42,16 @@ def prune_tree(dataset, fraction):
     return pruned, lastCorrectPruned
 
 
-#fractions = np.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
-fractions = np.array([0.3])
-iterations = 1
+fractions = np.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
+iterations = 300
 bestErrorForFractions = np.zeros((fractions.shape[0], iterations))
 for i in range(iterations):
     for index, fraction in enumerate(fractions):
-        pruned, correct = prune_tree(m.monk1, fraction)
-        print("Correct {}".format(correct))
+        pruned, correct = prune_tree(m.monk1, m.monk1test, fraction)
         bestErrorForFractions[index][i] += (1-correct)
 
-bestErrorForFractions /= iterations
 print(bestErrorForFractions)
-plt.plot(fractions, bestErrorForFractions)
-#plt.show()
+errorVector = [sum(bestErrorForFractions[row,:])/iterations for row in range(len(fractions))]
+print(errorVector)
+plt.plot(fractions, errorVector)
+plt.show()
