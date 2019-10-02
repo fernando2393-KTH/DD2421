@@ -27,7 +27,6 @@ plt.plot([p[0] for p in classA], [p[1] for p in classA], 'b.')
 plt.plot([p[0] for p in classB], [p[1] for p in classB], 'r.')
 plt.axis('equal') # Force same scale in both axis
 plt.savefig('svmplot.pdf') # Save copy in pdf file
-plt.show() # Show the plot
 
 
 
@@ -90,22 +89,22 @@ def bComputation(alphas):
     support_vector = []
 
     for i, alpha in enumerate(alphas):
-        if (alpha < C):
+        if (alpha[0] < C):
             support_vector = [dataset[i], i]
             break
 
     for i, alpha in enumerate(alphas):
-        b += alpha * dataset[i].y * kernel_matrix[support_vector[1]][i] - dataset[support_vector[1]][1]
+        b += alpha[0] * dataset[i][1] * kernel_matrix[support_vector[1]][i] - dataset[support_vector[1]][1]
 
     return b
 
-def indicatorFunction(alphas, s):
+def indicator(alphas, s):
 
     result = 0
     b = bComputation(alphas)
     
     for i, alpha in enumerate(alphas):
-        result += alpha * dataset[i].y * kernel_matrix[s.y][i] - b
+        result += alpha[0] * dataset[i][1] * kernel(s, dataset[i][0]) - b
 
     return result
         
@@ -114,4 +113,10 @@ def indicatorFunction(alphas, s):
 ret = minimize(objective, numpy.zeros(N), bounds=[(0, C) for b in range(N)], constraints={'type':'eq', 'fun':zeroFun})
 
 alpha = nonZeroAlpha(ret['x'])
+
+xgrid = numpy.linspace(-5, 5)
+ygrid = numpy.linspace(-4, 4)
+grid = numpy.array([[indicator(alpha, [x, y]) for x in xgrid ] for y in ygrid])
+plt.contour ( xgrid , ygrid , grid , (-1.0, 0.0, 1.0), colors = ('red', 'black', 'blue'), linewidths = (1, 3, 1))
+plt.show()
     
