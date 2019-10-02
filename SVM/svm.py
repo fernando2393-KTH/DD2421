@@ -33,7 +33,7 @@ plt.savefig('svmplot.pdf') # Save copy in pdf file
 # CONSTANTS
 
 dimension = 2
-C = 1
+C = 20
 dataset = [] # List of dataset elements
 
 def kernel(x, y):
