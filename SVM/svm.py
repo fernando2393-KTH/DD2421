@@ -2,37 +2,64 @@ import numpy, random , math
 from scipy . optimize import minimize
 import matplotlib . pyplot as plt
 
+numpy.random.seed(100)
+
+classA = numpy.concatenate (
+    (numpy.random.randn(10, 2) * 0.2 + [1.5, 0.5],
+    numpy.random.randn(10, 2) * 0.2 + [-1.5, 0.5]))
+classB = numpy.random.randn(20, 2) * 0.2 + [0.0, -0.5]
+
+inputs = numpy.concatenate((classA, classB))
+targets = numpy.concatenate(
+    (numpy.ones(classA.shape[0]), 
+    -numpy.ones(classB.shape[0])))
+
+N = inputs.shape[0] # Number of rows (samples)
+
+permute = list (range(N))
+random.shuffle(permute) 
+inputs = inputs[permute, :]
+targets = targets[permute]
+
+# PLOTTING
+
+plt.plot([p[0] for p in classA], [p[1] for p in classA], 'b.')
+plt.plot([p[0] for p in classB], [p[1] for p in classB], 'r.')
+plt.axis('equal') # Force same scale in both axis
+plt.savefig('svmplot.pdf') # Save copy in pdf file
+plt.show() # Show the plot
+
+
+
 # CONSTANTS
 
 dimension = 2
 C = 1
 dataset = [] # List of dataset elements
-N = len(dataset)
+
+def kernel(x, y):
+    p = 2
+    return (numpy.dot(x,y)+1)**p
+
+for i in range(N):
+    dataset.append([inputs[i], targets[i]])
 
 kernel_matrix = numpy.zeros([N,N])
 
 for i in range(N):
     for j in range (N):
-        kernel[i][j] = kernel(dataset[i].x, dataset[j].x)
+        kernel_matrix[i][j] = kernel(dataset[i][0], dataset[j][0])
 
 # FUNCTIONS
-
-class Pair:
-    x = numpy.zeros(dimension)
-    y = 1
 
 def zeroFun(alphas):
 
     result = 0
 
     for i, alpha in enumerate(alphas):
-        result += alpha * dataset[i].y
+        result += alpha * dataset[i][1]
 
     return result
-
-def kernel(x, y):
-    p = 2
-    return (numpy.multiply(x,y)+1)**p
 
 def objective(vector):
 
@@ -40,7 +67,7 @@ def objective(vector):
 
     for i, alphai in enumerate(vector):
         for j, alphaj in enumerate(vector):
-            result += alphai * alphaj * dataset[i].y * dataset[j].y * kernel_matrix[i][j]
+            result += alphai * alphaj * dataset[i][1] * dataset[j][1] * kernel_matrix[i][j]
 
     result = result/2
     result -= sum(vector)
@@ -64,11 +91,11 @@ def bComputation(alphas):
 
     for i, alpha in enumerate(alphas):
         if (alpha < C):
-            support_vector.append(dataset[i], i)
+            support_vector = [dataset[i], i]
             break
 
     for i, alpha in enumerate(alphas):
-        b += alpha * dataset[i].y * kernel_matrix[support_vector.y][i] - support_vector.y
+        b += alpha * dataset[i].y * kernel_matrix[support_vector[1]][i] - dataset[support_vector[1]][1]
 
     return b
 
