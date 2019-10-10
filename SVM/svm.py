@@ -4,6 +4,8 @@ import math
 import random
 from scipy import optimize as opt
 
+random.seed(100)
+
 def kernelScalar(x, y):
     return np.dot(x,y)
 
@@ -62,7 +64,7 @@ def indicator(s):
     
 C = 5
 # Creating dataset
-classA = np.concatenate((np.random.randn(10,2) * 0.2 + [1.5, 0.5], np.random.randn(10, 2) * 0.2 + [-1.5, 0.5]))
+classA = np.concatenate((np.random.randn(10,2) * 0.2 + [0.0, -0.5], np.random.randn(10, 2) * 0.2 + [0.0, -0.5]))
 classB = np.random.randn(20, 2) * 0.2 + [0.0, -0.5]
 inputs = np.concatenate((classA, classB))
 targets = np.concatenate((np.ones(classA.shape[0]), -np.ones(classB.shape[0])))
@@ -92,7 +94,6 @@ b = computeB(valid_alphas, targets, kernel_matrix, C)
 plt.plot([p[0] for p in classA], [p[1] for p in classA], 'b.')
 plt.plot([p[0] for p in classB], [p[1] for p in classB], 'r.')
 plt.axis('equal')
-plt.savefig('svmplot.pdf')
 
 xgrid = np.linspace(-5, 5)
 ygrid = np.linspace(-4, 4)
@@ -102,4 +103,5 @@ plt.contour(xgrid, ygrid, grid,
         (-1.0, 0.0, 1.0),
         colors=('red', 'black', 'blue'),
         linewidths=(1, 3, 1))
+plt.savefig('svmplot.pdf')
 plt.show()
