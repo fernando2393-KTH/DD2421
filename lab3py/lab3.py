@@ -235,6 +235,9 @@ def classifyBoost(X, classifiers, alphas, Nclasses):
         # here we can do it by filling in the votes vector with weighted votes
         # ==========================
         
+        # This should return the probability using the wights of a point to belong to a class
+        votes = sum(alphas[t] * classifiers[t].classify(X) for t in range(len(alphas)))
+
         # ==========================
 
         # one way to compute yPred after accumulating the votes
