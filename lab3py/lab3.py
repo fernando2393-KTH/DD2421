@@ -21,6 +21,7 @@ from scipy import misc
 from imp import reload
 from labfuns import *
 import random
+import math
 
 
 # ## Bayes classifier functions to implement
@@ -44,7 +45,7 @@ def computePrior(labels, W=None):
 
     # TODO: compute the values of prior for each class!
     # ==========================
-    
+    prior = np.bincount(labels) / float(Npts)
     # ==========================
 
     return prior
@@ -68,7 +69,14 @@ def mlParams(X, labels, W=None):
 
     # TODO: fill in the code to compute mu and sigma!
     # ==========================
-    
+
+    N = np.bincount(labels)
+
+    for i in range(len(classes)):
+        classI = X[labels == i]
+        mu[i] = sum(classI) / float(N[i])
+        for d in range(Ndims):
+            sigma[i][d][d] = sum([(x[d] - mu[i][d])**2 for x in classI]) / float(N[i])
     # ==========================
 
     return mu, sigma
@@ -80,18 +88,32 @@ def mlParams(X, labels, W=None):
 # out:     h - N vector of class predictions for test points
 def classifyBayes(X, prior, mu, sigma):
 
+    def classifyVector(X, prior, mu, sigma, Nclasses, Ndims): # This time X is a single vector
+        discrimination = np.zeros(Nclasses)
+        for i in range(Nclasses):
+            determinant = np.prod([sigma[i][j][j] for j in range(Ndims)])
+            invsigma = np.zeros((Ndims, Ndims))
+            for j in range(Ndims):
+                invsigma[j][j] = float(1 / sigma[i][j][j])
+            discrimination[i] = -(0.5) * math.log(determinant) - (0.5) * np.dot(np.dot((X - mu[i]), invsigma), (X - mu[i])) + math.log(prior[i])
+        return np.argmax(discrimination)
+
     Npts = X.shape[0]
     Nclasses,Ndims = np.shape(mu)
     logProb = np.zeros((Nclasses, Npts))
 
     # TODO: fill in the code to compute the log posterior logProb!
     # ==========================
+
+    h = np.zeros(len(X))
     
+    for i,x in enumerate(X):
+        h[i] = classifyVector(x, prior, mu, sigma, Nclasses, Ndims)
     # ==========================
     
     # one possible way of finding max a-posteriori once
     # you have computed the log posterior
-    h = np.argmax(logProb,axis=0)
+    #h = np.argmax(logProb,axis=0)
     return h
 
 
@@ -127,7 +149,7 @@ plotGaussian(X,labels,mu,sigma)
 # Call the `testClassifier` and `plotBoundary` functions for this part.
 
 
-#testClassifier(BayesClassifier(), dataset='iris', split=0.7)
+testClassifier(BayesClassifier(), dataset='iris', split=0.7)
 
 
 
@@ -135,7 +157,7 @@ plotGaussian(X,labels,mu,sigma)
 
 
 
-#plotBoundary(BayesClassifier(), dataset='iris',split=0.7)
+plotBoundary(BayesClassifier(), dataset='iris',split=0.7)
 
 
 # ## Boosting functions to implement
