@@ -45,7 +45,11 @@ def computePrior(labels, W=None):
 
     # TODO: compute the values of prior for each class!
     # ==========================
-    prior = np.bincount(labels) / float(Npts)
+    for i in range(Nclasses):
+        for j in range(Npts):
+            if(labels[j] == i):
+                prior[i] += W[j]
+    prior = prior/sum(W)
     # ==========================
 
     return prior
@@ -72,11 +76,14 @@ def mlParams(X, labels, W=None):
 
     N = np.bincount(labels)
 
+
     for i in range(len(classes)):
         classI = X[labels == i]
-        mu[i] = sum(classI) / float(N[i])
+        wI = W[labels == i]
+        mu[i] = sum(classI * wI) / sum(wI)
         for d in range(Ndims):
-            sigma[i][d][d] = sum([(x[d] - mu[i][d])**2 for x in classI]) / float(N[i])
+            sigma[i][d][d] = sum([wI[j] * (x[d] - mu[i][d])**2 for j, x in enumerate(classI)]) / sum(wI)
+
     # ==========================
 
     return mu, sigma
@@ -190,8 +197,21 @@ def trainBoost(base_classifier, X, labels, T=10):
 
         # TODO: Fill in the rest, construct the alphas etc.
         # ==========================
+
+        error = sum(wCur[i] for i in range(len(vote)) if vote[i] != labels[i])
+        alpha = (0.5) * (math.log(1 - error) - math.log(error))
         
-        # alphas.append(alpha) # you will need to append the new alpha
+        alphas.append(alpha) # you will need to append the new alpha
+
+        for i, w in enumerate(wCur):
+            if vote[i] == labels[i]: # If good prediction
+                w = w * math.e**alpha**i_iter
+            else:
+                w = w * math.e**-alpha**i_iter
+
+        for w in wCur:
+            w = w / sum(wCur) # Normalize
+
         # ==========================
         
     return classifiers, alphas
